@@ -8,6 +8,7 @@
         :root {
             --bg: #0f1117;
             --surface: #1a1d27;
+            --surface2: #22263a;
             --border: #2a2d3e;
             --accent: #5865f2;
             --accent2: #43b581;
@@ -35,16 +36,16 @@
         header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
             header h1 {
-                font-size: 18px;
+                font-size: 17px;
                 font-weight: 700;
-                letter-spacing: .5px;
+                flex: 1;
             }
 
         .badge {
@@ -73,15 +74,68 @@
             height: 8px;
             border-radius: 50%;
             background: currentColor;
+            animation: pulse 2s infinite;
         }
 
+        .badge.off .dot {
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            padding: 0 24px;
+            gap: 2px;
+        }
+
+            nav button {
+                background: none;
+                border: none;
+                color: var(--muted);
+                padding: 12px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+                transition: color .15s, border-color .15s;
+                border-radius: 0;
+            }
+
+                nav button.active {
+                    color: var(--text);
+                    border-bottom-color: var(--accent);
+                }
+
+                nav button:hover:not(.active) {
+                    color: var(--text);
+                }
+
         main {
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
             padding: 24px 16px;
             display: grid;
             gap: 20px;
         }
+
+        .tab-content {
+            display: none;
+        }
+
+            .tab-content.active {
+                display: contents;
+            }
 
         .card {
             background: var(--surface);
@@ -91,7 +145,7 @@
         }
 
             .card h2 {
-                font-size: 13px;
+                font-size: 12px;
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 color: var(--muted);
@@ -138,15 +192,17 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity .15s, background .15s;
+            transition: opacity .15s;
+            white-space: nowrap;
         }
 
             button:hover {
                 opacity: .85;
             }
 
-            button:active {
-                opacity: .7;
+            button:disabled {
+                opacity: .4;
+                cursor: not-allowed;
             }
 
         .btn-primary {
@@ -169,9 +225,10 @@
             color: #000;
         }
 
-        button:disabled {
-            opacity: .4;
-            cursor: not-allowed;
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
         textarea {
@@ -184,7 +241,7 @@
             padding: 10px;
             border-radius: 6px;
             resize: vertical;
-            min-height: 120px;
+            min-height: 100px;
             outline: none;
         }
 
@@ -200,15 +257,121 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 10px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
+            margin-top: 12px;
+        }
+
+            .log:empty {
+                display: none;
+            }
+
+        .config-box {
+            position: relative;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 14px 14px 14px;
+            font-family: var(--mono);
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--accent2);
+            margin-top: 14px;
+            min-height: 60px;
             display: none;
         }
 
-            .log.visible {
+            .config-box.visible {
                 display: block;
+            }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+            .copy-btn:hover {
+                background: var(--accent);
+                border-color: var(--accent);
+            }
+
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+            .clients-table th {
+                text-align: left;
+                padding: 8px 12px;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: .8px;
+                color: var(--muted);
+                border-bottom: 1px solid var(--border);
+            }
+
+            .clients-table td {
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .clients-table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .clients-table tr:hover td {
+                background: var(--surface2);
+            }
+
+        .ip-chip {
+            font-family: var(--mono);
+            font-size: 12px;
+            background: var(--surface2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            padding: 40px;
+        }
+
+        .type-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .pill {
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            transition: all .15s;
+            color: var(--muted);
+        }
+
+            .pill.active {
+                background: var(--accent);
+                border-color: var(--accent);
+                color: #fff;
             }
 
         .toast {
@@ -239,71 +402,142 @@
                 color: #fff;
             }
 
-        .strategy-meta {
-            font-family: var(--mono);
+        .stat-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 12px 18px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-label {
             font-size: 11px;
             color: var(--muted);
-            margin-top: 8px;
-            padding: 6px 10px;
-            background: var(--bg);
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            display: none;
+            margin-top: 2px;
         }
+
+        .info-table td {
+            padding: 8px 0;
+        }
+
+            .info-table td:first-child {
+                color: var(--muted);
+                width: 160px;
+            }
     </style>
 </head>
 <body>
 
     <header>
         <h1>⚡ zapret panel</h1>
-        <div class="badge off" id="statusBadge">
-            <span class="dot"></span>
-            <span id="statusText">загрузка…</span>
-        </div>
+        <div class="badge off" id="statusBadge"><span class="dot"></span><span id="statusText">загрузка…</span></div>
     </header>
+
+    <nav>
+        <button class="active" onclick="switchTab('strategy',this)">🛡 Стратегия</button>
+        <button onclick="switchTab('domains',this)">📋 Домены</button>
+        <button onclick="switchTab('clients',this)">👥 Клиенты</button>
+        <button onclick="switchTab('connect',this)">🔗 Подключение</button>
+    </nav>
 
     <main>
 
-        <!-- Стратегия -->
-        <div class="card">
-            <h2>Стратегия обхода</h2>
-            <div class="row">
-                <div>
-                    <label>Источник</label>
-                    <select id="source" onchange="onSourceChange()">
-                        <option value="flowseal">Flowseal/zapret-discord-youtube</option>
-                        <option value="bol-van">bol-van/zapret</option>
-                    </select>
+        <!-- TAB: Стратегия -->
+        <div class="tab-content active" id="tab-strategy">
+            <div class="card">
+                <h2>Выбор стратегии обхода</h2>
+                <div class="row">
+                    <div>
+                        <label>Источник</label>
+                        <select id="source" onchange="onSourceChange()">
+                            <option value="flowseal">Flowseal/zapret-discord-youtube</option>
+                            <option value="bol-van">bol-van/zapret</option>
+                        </select>
+                    </div>
+                    <div><label>Файл стратегии</label><select id="strategy" style="min-width:300px"></select></div>
+                    <div><label>tpws порт</label><input type="number" id="tpwsPort" value="1188" style="width:90px"></div>
                 </div>
-                <div>
-                    <label>Стратегия</label>
-                    <select id="strategy" style="min-width:280px"></select>
+                <div class="row" style="margin-top:12px">
+                    <button class="btn-primary" onclick="applyStrategy()">▶ Применить</button>
+                    <button class="btn-danger" onclick="stopTpws()">■ Остановить tpws</button>
                 </div>
-                <div>
-                    <label>tpws порт</label>
-                    <input type="number" id="tpwsPort" value="1188" style="width:90px">
-                </div>
-                <button class="btn-primary" onclick="applyStrategy()">▶ Применить</button>
-                <button class="btn-danger" onclick="stopTpws()">■ Стоп</button>
             </div>
-            <div class="strategy-meta" id="strategyMeta"></div>
+            <div class="card">
+                <h2>Обновление с GitHub</h2>
+                <div class="row">
+                    <button class="btn-warn" onclick="updateStrategies()" id="btnUpdate">↻ Обновить оба репозитория</button>
+                </div>
+                <div class="log" id="updateLog"></div>
+            </div>
         </div>
 
-        <!-- Обновление -->
-        <div class="card">
-            <h2>Обновление стратегий с GitHub</h2>
-            <div class="row">
-                <button class="btn-warn" onclick="updateStrategies()" id="btnUpdate">↻ Обновить оба репозитория</button>
+        <!-- TAB: Домены -->
+        <div class="tab-content" id="tab-domains">
+            <div class="card">
+                <h2>Список доменов (hostlist для tpws)</h2>
+                <textarea id="domains" placeholder="youtube.com&#10;discord.com&#10;twitch.tv" style="min-height:220px"></textarea>
+                <div class="row" style="margin-top:12px">
+                    <button class="btn-success" onclick="saveDomains()">💾 Сохранить</button>
+                    <span style="color:var(--muted);font-size:12px">Применяется через HUP без перезапуска tpws</span>
+                </div>
             </div>
-            <div class="log" id="updateLog"></div>
         </div>
 
-        <!-- Домены -->
-        <div class="card">
-            <h2>Список доменов (hostlist)</h2>
-            <textarea id="domains" placeholder="youtube.com&#10;discord.com&#10;twitch.tv"></textarea>
-            <div class="row" style="margin-top:10px">
-                <button class="btn-success" onclick="saveDomains()">💾 Сохранить</button>
+        <!-- TAB: Клиенты -->
+        <div class="tab-content" id="tab-clients">
+            <div class="card">
+                <h2>Активность прокси (последние 200 соединений)</h2>
+                <div class="stat-row">
+                    <div class="stat"><div class="stat-val" id="statTotal">—</div><div class="stat-label">Соединений</div></div>
+                    <div class="stat"><div class="stat-val" id="statUniq">—</div><div class="stat-label">Уникальных IP</div></div>
+                </div>
+                <div class="row" style="margin-bottom:14px">
+                    <button class="btn-ghost" onclick="loadClients()">↻ Обновить</button>
+                </div>
+                <div id="clientsTable"><div class="empty-state">Загрузка…</div></div>
+            </div>
+        </div>
+
+        <!-- TAB: Подключение -->
+        <div class="tab-content" id="tab-connect">
+            <div class="card">
+                <h2>Генератор конфигурации клиента</h2>
+                <div class="type-pills">
+                    <div class="pill active" data-type="url" onclick="selectType(this)">Прямая ссылка</div>
+                    <div class="pill" data-type="clash" onclick="selectType(this)">Clash / Mihomo</div>
+                    <div class="pill" data-type="v2ray" onclick="selectType(this)">V2Ray / Xray</div>
+                    <div class="pill" data-type="proxychains" onclick="selectType(this)">Proxychains</div>
+                    <div class="pill" data-type="curl" onclick="selectType(this)">curl / wget</div>
+                </div>
+                <div class="row">
+                    <div><label>Метка профиля</label><input type="text" id="configLabel" value="zapret" style="width:180px"></div>
+                    <button class="btn-primary" onclick="genConfig()">⚙ Сгенерировать</button>
+                </div>
+                <div class="config-box" id="configOutput">
+                    <button class="copy-btn" onclick="copyConfig()">Копировать</button>
+                    <span id="configText"></span>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Параметры SOCKS5</h2>
+                <table class="info-table" style="width:100%;border-collapse:collapse">
+                    <tr><td>Сервер</td><td><span class="ip-chip" id="infoServer">—</span></td></tr>
+                    <tr><td>Порт</td><td><span class="ip-chip" id="infoPort">1080</span></td></tr>
+                    <tr><td>Протокол</td><td><span class="ip-chip">SOCKS5 + Username/Password</span></td></tr>
+                    <tr><td>Аутентификация</td><td><span class="ip-chip">RFC 1929 (3proxy)</span></td></tr>
+                </table>
             </div>
         </div>
 
@@ -311,122 +545,116 @@
 
     <div class="toast" id="toast"></div>
 
-    <script>const $ = id => document.getElementById(id);
+    <script>
+        const $ = id => document.getElementById(id);
+        let allStrategies = { 'bol-van': [], 'flowseal': [] };
+        let selectedType = 'url';
+        let lastConfig = null;
 
-let allStrategies = { 'bol-van': [], 'flowseal': [] };
+        function switchTab(name, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+            $('tab-' + name).classList.add('active');
+            btn.classList.add('active');
+            if (name === 'clients') loadClients();
+        }
 
-async function fetchStatus() {
-  try {
-    const r = await fetch('/cgi-bin/status.sh');
-    const d = await r.json();
-    allStrategies = d.strategies || allStrategies;
+        async function fetchStatus() {
+            try {
+                const d = await fetch('/cgi-bin/status.sh').then(r => r.json());
+                allStrategies = d.strategies || allStrategies;
+                const running = d.tpws_running;
+                $('statusBadge').className = 'badge ' + (running ? 'on' : 'off');
+                $('statusText').textContent = running
+                    ? 'tpws: ' + (d.state?.active_strategy || '—').split('/').pop()
+                    : 'tpws остановлен';
+                if (d.state?.active_source) $('source').value = d.state.active_source;
+                if (d.state?.tpws_port) $('tpwsPort').value = d.state.tpws_port;
+                renderStrategies(d.state?.active_strategy);
+                loadDomains();
+            } catch (e) { $('statusText').textContent = 'нет связи'; }
+        }
 
-    const running = d.tpws_running;
-    const badge = $('statusBadge');
-    badge.className = 'badge ' + (running ? 'on' : 'off');
-    $('statusText').textContent = running
-      ? `tpws: ${d.state?.active_source || ''}/${d.state?.active_strategy || '—'}`
-      : 'tpws остановлен';
+        function renderStrategies(active) {
+            const list = allStrategies[$('source').value] || [];
+            $('strategy').innerHTML = list.length
+                ? list.map(s => `<option value="${s}"${s === active ? ' selected' : ''}>${s.split('/').pop()}</option>`).join('')
+                : '<option value="">— нет стратегий, нажмите Обновить —</option>';
+        }
+        function onSourceChange() { renderStrategies(); }
 
-    // Восстанавливаем выбор
-    if (d.state?.active_source) $('source').value = d.state.active_source;
-    if (d.state?.tpws_port)     $('tpwsPort').value = d.state.tpws_port;
-    renderStrategies(d.state?.active_strategy);
+        async function applyStrategy() {
+            const source = $('source').value, strategy = $('strategy').value, port = +$('tpwsPort').value || 1188;
+            if (!strategy) return toast('Выбери стратегию', false);
+            const d = await fetch('/cgi-bin/apply.sh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source, strategy, tpws_port: port }) }).then(r => r.json());
+            d.ok ? toast('Стратегия применена ✓') : toast('Ошибка: ' + d.error, false);
+            setTimeout(fetchStatus, 800);
+        }
+        async function stopTpws() {
+            await fetch('/cgi-bin/apply.sh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: '', strategy: '' }) });
+            toast('tpws остановлен'); setTimeout(fetchStatus, 800);
+        }
+        async function updateStrategies() {
+            const btn = $('btnUpdate'), log = $('updateLog');
+            btn.disabled = true; btn.textContent = '↻ Обновляем…'; log.textContent = 'Запрос к GitHub…';
+            try {
+                const d = await fetch('/cgi-bin/update.sh').then(r => r.json());
+                log.textContent = d.log || 'OK';
+                d.ok ? toast('Обновлено ✓') : toast('Ошибки', false);
+                fetchStatus();
+            } catch (e) { log.textContent = 'Ошибка'; toast('Ошибка', false); }
+            finally { btn.disabled = false; btn.textContent = '↻ Обновить оба репозитория'; }
+        }
 
-    // Домены
-    loadDomains();
-  } catch(e) {
-    $('statusText').textContent = 'ошибка связи';
-  }
-}
+        async function loadDomains() {
+            try { $('domains').value = (await fetch('/cgi-bin/domains.sh').then(r => r.json())).join('\n'); } catch (e) { }
+        }
+        async function saveDomains() {
+            const domains = $('domains').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const d = await fetch('/cgi-bin/domains.sh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domains }) }).then(r => r.json());
+            d.ok ? toast('Домены сохранены ✓') : toast('Ошибка', false);
+        }
 
-function renderStrategies(active) {
-  const source = $('source').value;
-  const list = allStrategies[source] || [];
-  const sel = $('strategy');
-  sel.innerHTML = list.length
-    ? list.map(s => `<option value="${s}" ${s===active?'selected':''}>${s}</option>`).join('')
-    : '<option value="">— нет стратегий —</option>';
-}
+        async function loadClients() {
+            const wrap = $('clientsTable');
+            wrap.innerHTML = '<div class="empty-state">Загрузка…</div>';
+            try {
+                const d = await fetch('/cgi-bin/clients.sh').then(r => r.json());
+                const cl = d.clients || [];
+                $('statTotal').textContent = cl.length;
+                $('statUniq').textContent = new Set(cl.map(c => c.client_ip)).size;
+                if (!cl.length) { wrap.innerHTML = '<div class="empty-state">Нет данных о подключениях</div>'; return; }
+                let html = `<table class="clients-table"><thead><tr><th>Время</th><th>Клиент IP</th><th>Пользователь</th><th>Удалённый хост</th><th>↑</th><th>↓</th></tr></thead><tbody>`;
+                for (const c of cl.slice().reverse())
+                    html += `<tr><td style="color:var(--muted);font-size:12px">${c.time}</td><td><span class="ip-chip">${c.client_ip}</span></td><td style="color:var(--accent)">${c.user || '—'}</td><td style="font-family:var(--mono);font-size:12px">${c.remote}:${c.remote_port}</td><td style="color:var(--accent2)">${fmtB(c.bytes_out)}</td><td style="color:var(--warn)">${fmtB(c.bytes_in)}</td></tr>`;
+                wrap.innerHTML = html + '</tbody></table>';
+            } catch (e) { wrap.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+        }
+        function fmtB(b) { const n = parseInt(b) || 0; if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(1) + ' KB'; return (n / 1048576).toFixed(1) + ' MB'; }
 
-function onSourceChange() { renderStrategies(); }
+        function selectType(el) {
+            document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active'); selectedType = el.dataset.type;
+            if (lastConfig) showConfig(lastConfig);
+        }
+        async function genConfig() {
+            const label = $('configLabel').value || 'zapret';
+            const d = await fetch('/cgi-bin/genconfig.sh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: selectedType, label }) }).then(r => r.json());
+            if (!d.ok) { toast('Ошибка', false); return; }
+            lastConfig = d; showConfig(d);
+            $('infoServer').textContent = d.server || '—';
+            $('infoPort').textContent = d.port || '1080';
+        }
+        function showConfig(d) { $('configText').textContent = d.config; $('configOutput').classList.add('visible'); }
+        function copyConfig() { navigator.clipboard.writeText($('configText').textContent).then(() => toast('Скопировано ✓')); }
 
-async function applyStrategy() {
-  const source   = $('source').value;
-  const strategy = $('strategy').value;
-  const port     = parseInt($('tpwsPort').value) || 1188;
-  if (!strategy) return toast('Выбери стратегию', false);
+        function toast(msg, ok = true) {
+            const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + (ok ? 'ok' : 'err');
+            setTimeout(() => t.className = 'toast', 2800);
+        }
 
-  const r = await fetch('/cgi-bin/apply.sh', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source, strategy, tpws_port: port })
-  });
-  const d = await r.json();
-  d.ok ? toast('Стратегия применена ✓') : toast('Ошибка: ' + d.error, false);
-  setTimeout(fetchStatus, 800);
-}
-
-async function stopTpws() {
-  await fetch('/cgi-bin/apply.sh', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source: '', strategy: '' })
-  });
-  toast('tpws остановлен');
-  setTimeout(fetchStatus, 800);
-}
-
-async function updateStrategies() {
-  const btn = $('btnUpdate');
-  const log = $('updateLog');
-  btn.disabled = true;
-  btn.textContent = '↻ Обновляем…';
-  log.textContent = '';
-  log.classList.add('visible');
-
-  try {
-    const r = await fetch('/cgi-bin/update.sh');
-    const d = await r.json();
-    log.textContent = d.log || 'OK';
-    d.ok ? toast('Обновлено ✓') : toast('Ошибки при обновлении', false);
-    fetchStatus();
-  } catch(e) {
-    log.textContent = 'Ошибка запроса';
-    toast('Ошибка', false);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↻ Обновить оба репозитория';
-  }
-}
-
-async function loadDomains() {
-  try {
-    const r = await fetch('/cgi-bin/domains.sh');
-    const d = await r.json();
-    $('domains').value = d.join('\n');
-  } catch(e) {}
-}
-
-async function saveDomains() {
-  const domains = $('domains').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const r = await fetch('/cgi-bin/domains.sh', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domains })
-  });
-  const d = await r.json();
-  d.ok ? toast('Домены сохранены ✓') : toast('Ошибка сохранения', false);
-}
-
-function toast(msg, ok=true) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + (ok ? 'ok' : 'err');
-  setTimeout(() => t.className = 'toast', 2800);
-}
-
-fetchStatus();
-setInterval(fetchStatus, 10000);</script>
+        fetchStatus();
+        setInterval(fetchStatus, 15000);
+    </script>
 </body>
 </html>

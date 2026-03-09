@@ -4,6 +4,8 @@ set -e
 DATA=/data
 STRATEGIES_DIR="$DATA/strategies"
 STATE_FILE="$DATA/state.json"
+PROXY_CONF="$DATA/3proxy.cfg"
+CONNECTIONS_LOG="$DATA/connections.log"
 
 # ── Инициализация директорий ──────────────────────────────────
 mkdir -p "$STRATEGIES_DIR/bol-van"
@@ -22,27 +24,53 @@ if [ ! -f "$STATE_FILE" ]; then
 EOF
 fi
 
+# ── Генерация htpasswd для Web UI ─────────────────────────────
+if [ ! -f /data/.htpasswd ]; then
+  htpasswd -cb /data/.htpasswd "${WEBUI_USER:-admin}" "${WEBUI_PASS:-changeme}"
+fi
+
+# ── Генерация конфига 3proxy ──────────────────────────────────
+PROXY_USER="${PROXY_USER:-proxyuser}"
+PROXY_PASS="${PROXY_PASS:-proxypass}"
+SOCKS_PORT="${SOCKS5_PORT:-1080}"
+
+cat > "$PROXY_CONF" <<EOF
+# 3proxy config — auto-generated
+nscache 65536
+timeouts 1 5 30 60 180 1800 15 60
+log $CONNECTIONS_LOG D
+logformat "- +_L%t.%.  %N.%p %E %U %C:%c %R:%r %O %I %h %T"
+rotate 7
+
+# Аутентификация: username/password
+auth strong
+users ${PROXY_USER}:CL:${PROXY_PASS}
+
+# SOCKS5 с авторизацией
+allow *
+socks -p${SOCKS_PORT}
+EOF
+
 # ── Первичная загрузка стратегий если нет ────────────────────
 if [ ! -f "$STRATEGIES_DIR/.initialized" ]; then
   echo "[init] Cloning strategies from GitHub..."
 
   git clone --depth=1 https://github.com/bol-van/zapret.git \
       /tmp/zapret-bolvan 2>/dev/null && \
-    cp -r /tmp/zapret-bolvan/docs/strategies/* "$STRATEGIES_DIR/bol-van/" 2>/dev/null || \
-    ls /tmp/zapret-bolvan/ > "$STRATEGIES_DIR/bol-van/.cloned" 2>/dev/null || true
+    cp -rf /tmp/zapret-bolvan/. "$STRATEGIES_DIR/bol-van/" 2>/dev/null || true
 
   git clone --depth=1 https://github.com/Flowseal/zapret-discord-youtube.git \
       /tmp/zapret-flowseal 2>/dev/null && \
-    cp -r /tmp/zapret-flowseal/. "$STRATEGIES_DIR/flowseal/" 2>/dev/null || true
+    cp -rf /tmp/zapret-flowseal/. "$STRATEGIES_DIR/flowseal/" 2>/dev/null || true
 
   touch "$STRATEGIES_DIR/.initialized"
   rm -rf /tmp/zapret-bolvan /tmp/zapret-flowseal
   echo "[init] Done."
 fi
 
-# ── Запуск microsocks (SOCKS5) ────────────────────────────────
-echo "[start] Starting SOCKS5 proxy on :${SOCKS5_PORT:-1080}..."
-/usr/local/bin/microsocks -p "${SOCKS5_PORT:-1080}" &
+# ── Запуск 3proxy (SOCKS5 с авторизацией) ────────────────────
+echo "[start] Starting 3proxy SOCKS5 on :${SOCKS_PORT} (user: ${PROXY_USER})..."
+/usr/local/bin/3proxy "$PROXY_CONF" &
 
 # ── Запуск tpws если есть активная стратегия ─────────────────
 ACTIVE=$(jq -r '.active_strategy // ""' "$STATE_FILE")
@@ -53,8 +81,8 @@ if [ -n "$ACTIVE" ] && [ "$ACTIVE" != "null" ]; then
 
   if [ -f "$STRATEGY_FILE" ]; then
     echo "[start] Applying strategy: $SOURCE/$ACTIVE"
-    ARGS=$(cat "$STRATEGY_FILE")
-    /usr/local/bin/tpws --port="$TPWS_PORT" $ARGS &
+    ARGS=$(grep -v '^#' "$STRATEGY_FILE" | tr '\n' ' ')
+    /usr/local/bin/tpws --port="$TPWS_PORT" $ARGS > /data/tpws.log 2>&1 &
   fi
 fi
 

@@ -7,17 +7,21 @@ RUN apk add --no-cache \
     make \
     musl-dev \
     linux-headers \
-    libcap-dev
-
-# Build microsocks (lightweight SOCKS5 proxy)
-RUN git clone --depth=1 https://github.com/rofl0r/microsocks.git /build/microsocks && \
-    cd /build/microsocks && make && strip microsocks
+    libcap-dev \
+    zlib-dev
 
 # Build tpws from zapret (bol-van)
+# tpws живёт в tpws/, не в nfq/
 RUN git clone --depth=1 https://github.com/bol-van/zapret.git /build/zapret && \
     cd /build/zapret && \
-    make -C nfq tpws && \
-    strip /build/zapret/tpws/tpws
+    make -C tpws && \
+    strip tpws/tpws
+
+# Build 3proxy — лёгкий прокси с SOCKS5 + HTTP + username/password auth
+RUN git clone --depth=1 https://github.com/3proxy/3proxy.git /build/3proxy && \
+    cd /build/3proxy && \
+    make -f Makefile.Linux && \
+    strip bin/3proxy
 
 # ────────────────────────────────────────────────────────────
 FROM alpine:3.19
@@ -30,11 +34,12 @@ RUN apk add --no-cache \
     fcgiwrap \
     spawn-fcgi \
     ca-certificates \
-    jq
+    jq \
+    apache2-utils
 
 # Copy binaries from builder
-COPY --from=builder /build/microsocks/microsocks /usr/local/bin/microsocks
-COPY --from=builder /build/zapret/tpws/tpws     /usr/local/bin/tpws
+COPY --from=builder /build/zapret/tpws/tpws  /usr/local/bin/tpws
+COPY --from=builder /build/3proxy/bin/3proxy /usr/local/bin/3proxy
 
 # Web UI
 COPY webui/ /var/www/webui/
@@ -47,7 +52,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Data volume: стратегии, конфиги, состояние
+# Data volume: стратегии, конфиги, состояние, логи
 VOLUME ["/data"]
 
 EXPOSE 1080 8080

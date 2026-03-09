@@ -4,17 +4,21 @@ services:
     container_name: zapret
     restart: unless-stopped
     cap_add:
-      - NET_ADMIN        # нужно tpws для прозрачного прокси
+      - NET_ADMIN
     environment:
+      # Web UI credentials
       - WEBUI_USER=admin
       - WEBUI_PASS=changeme
+      # SOCKS5 proxy credentials
+      - PROXY_USER=proxyuser
+      - PROXY_PASS=changeme
       - SOCKS5_PORT=1080
       - WEBUI_PORT=8080
     ports:
-      - "1080:1080"      # SOCKS5 вход
-      - "8080:8080"      # Web UI
+      - "1080:1080"      # SOCKS5 (с авторизацией)
+      - "8080:8080"      # Web UI (под паролем)
     volumes:
-      - zapret_data:/data # стратегии, конфиги, состояние
+      - zapret_data:/data
     networks:
       - zapret_net
 
