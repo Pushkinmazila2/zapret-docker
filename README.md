@@ -2,6 +2,8 @@
 
 Минималистичный Docker-контейнер с DPI-bypass (zapret/tpws) + SOCKS5 прокси + Web UI.
 
+##LOG_LEVEL=none|error|warn|info|debug
+
 ## Структура
 
 ```
