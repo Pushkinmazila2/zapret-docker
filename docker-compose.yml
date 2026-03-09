@@ -1,1 +1,26 @@
+services:
+  zapret:
+    build: .
+    container_name: zapret
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN        # нужно tpws для прозрачного прокси
+    environment:
+      - WEBUI_USER=admin
+      - WEBUI_PASS=changeme
+      - SOCKS5_PORT=1080
+      - WEBUI_PORT=8080
+    ports:
+      - "1080:1080"      # SOCKS5 вход
+      - "8080:8080"      # Web UI
+    volumes:
+      - zapret_data:/data # стратегии, конфиги, состояние
+    networks:
+      - zapret_net
 
+volumes:
+  zapret_data:
+
+networks:
+  zapret_net:
+    driver: bridge

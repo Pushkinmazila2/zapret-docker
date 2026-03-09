@@ -1,1 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>zapret panel</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3e;
+            --accent: #5865f2;
+            --accent2: #43b581;
+            --danger: #ed4245;
+            --warn: #faa61a;
+            --text: #e0e0e0;
+            --muted: #72767d;
+            --mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, sans-serif;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            header h1 {
+                font-size: 18px;
+                font-weight: 700;
+                letter-spacing: .5px;
+            }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--border);
+        }
+
+            .badge.on {
+                background: #1a3a2a;
+                color: var(--accent2);
+            }
+
+            .badge.off {
+                background: #3a1a1a;
+                color: var(--danger);
+            }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+            .card h2 {
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: var(--muted);
+                margin-bottom: 16px;
+            }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        label {
+            font-size: 12px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        select, input[type=text], input[type=number] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border .15s;
+        }
+
+            select:focus, input:focus {
+                border-color: var(--accent);
+            }
+
+        select {
+            min-width: 200px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s, background .15s;
+        }
+
+            button:hover {
+                opacity: .85;
+            }
+
+            button:active {
+                opacity: .7;
+            }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: var(--accent2);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-warn {
+            background: var(--warn);
+            color: #000;
+        }
+
+        button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            resize: vertical;
+            min-height: 120px;
+            outline: none;
+        }
+
+            textarea:focus {
+                border-color: var(--accent);
+            }
+
+        .log {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+
+            .log.visible {
+                display: block;
+            }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity .3s;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+            .toast.show {
+                opacity: 1;
+            }
+
+            .toast.ok {
+                background: var(--accent2);
+                color: #fff;
+            }
+
+            .toast.err {
+                background: var(--danger);
+                color: #fff;
+            }
+
+        .strategy-meta {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: var(--bg);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚡ zapret panel</h1>
+        <div class="badge off" id="statusBadge">
+            <span class="dot"></span>
+            <span id="statusText">загрузка…</span>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- Стратегия -->
+        <div class="card">
+            <h2>Стратегия обхода</h2>
+            <div class="row">
+                <div>
+                    <label>Источник</label>
+                    <select id="source" onchange="onSourceChange()">
+                        <option value="flowseal">Flowseal/zapret-discord-youtube</option>
+                        <option value="bol-van">bol-van/zapret</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Стратегия</label>
+                    <select id="strategy" style="min-width:280px"></select>
+                </div>
+                <div>
+                    <label>tpws порт</label>
+                    <input type="number" id="tpwsPort" value="1188" style="width:90px">
+                </div>
+                <button class="btn-primary" onclick="applyStrategy()">▶ Применить</button>
+                <button class="btn-danger" onclick="stopTpws()">■ Стоп</button>
+            </div>
+            <div class="strategy-meta" id="strategyMeta"></div>
+        </div>
+
+        <!-- Обновление -->
+        <div class="card">
+            <h2>Обновление стратегий с GitHub</h2>
+            <div class="row">
+                <button class="btn-warn" onclick="updateStrategies()" id="btnUpdate">↻ Обновить оба репозитория</button>
+            </div>
+            <div class="log" id="updateLog"></div>
+        </div>
+
+        <!-- Домены -->
+        <div class="card">
+            <h2>Список доменов (hostlist)</h2>
+            <textarea id="domains" placeholder="youtube.com&#10;discord.com&#10;twitch.tv"></textarea>
+            <div class="row" style="margin-top:10px">
+                <button class="btn-success" onclick="saveDomains()">💾 Сохранить</button>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>const $ = id => document.getElementById(id);
+
+let allStrategies = { 'bol-van': [], 'flowseal': [] };
+
+async function fetchStatus() {
+  try {
+    const r = await fetch('/cgi-bin/status.sh');
+    const d = await r.json();
+    allStrategies = d.strategies || allStrategies;
+
+    const running = d.tpws_running;
+    const badge = $('statusBadge');
+    badge.className = 'badge ' + (running ? 'on' : 'off');
+    $('statusText').textContent = running
+      ? `tpws: ${d.state?.active_source || ''}/${d.state?.active_strategy || '—'}`
+      : 'tpws остановлен';
+
+    // Восстанавливаем выбор
+    if (d.state?.active_source) $('source').value = d.state.active_source;
+    if (d.state?.tpws_port)     $('tpwsPort').value = d.state.tpws_port;
+    renderStrategies(d.state?.active_strategy);
+
+    // Домены
+    loadDomains();
+  } catch(e) {
+    $('statusText').textContent = 'ошибка связи';
+  }
+}
+
+function renderStrategies(active) {
+  const source = $('source').value;
+  const list = allStrategies[source] || [];
+  const sel = $('strategy');
+  sel.innerHTML = list.length
+    ? list.map(s => `<option value="${s}" ${s===active?'selected':''}>${s}</option>`).join('')
+    : '<option value="">— нет стратегий —</option>';
+}
+
+function onSourceChange() { renderStrategies(); }
+
+async function applyStrategy() {
+  const source   = $('source').value;
+  const strategy = $('strategy').value;
+  const port     = parseInt($('tpwsPort').value) || 1188;
+  if (!strategy) return toast('Выбери стратегию', false);
+
+  const r = await fetch('/cgi-bin/apply.sh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, strategy, tpws_port: port })
+  });
+  const d = await r.json();
+  d.ok ? toast('Стратегия применена ✓') : toast('Ошибка: ' + d.error, false);
+  setTimeout(fetchStatus, 800);
+}
+
+async function stopTpws() {
+  await fetch('/cgi-bin/apply.sh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source: '', strategy: '' })
+  });
+  toast('tpws остановлен');
+  setTimeout(fetchStatus, 800);
+}
+
+async function updateStrategies() {
+  const btn = $('btnUpdate');
+  const log = $('updateLog');
+  btn.disabled = true;
+  btn.textContent = '↻ Обновляем…';
+  log.textContent = '';
+  log.classList.add('visible');
+
+  try {
+    const r = await fetch('/cgi-bin/update.sh');
+    const d = await r.json();
+    log.textContent = d.log || 'OK';
+    d.ok ? toast('Обновлено ✓') : toast('Ошибки при обновлении', false);
+    fetchStatus();
+  } catch(e) {
+    log.textContent = 'Ошибка запроса';
+    toast('Ошибка', false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Обновить оба репозитория';
+  }
+}
+
+async function loadDomains() {
+  try {
+    const r = await fetch('/cgi-bin/domains.sh');
+    const d = await r.json();
+    $('domains').value = d.join('\n');
+  } catch(e) {}
+}
+
+async function saveDomains() {
+  const domains = $('domains').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const r = await fetch('/cgi-bin/domains.sh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domains })
+  });
+  const d = await r.json();
+  d.ok ? toast('Домены сохранены ✓') : toast('Ошибка сохранения', false);
+}
+
+function toast(msg, ok=true) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+fetchStatus();
+setInterval(fetchStatus, 10000);</script>
+</body>
+</html>
