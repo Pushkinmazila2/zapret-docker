@@ -1,0 +1,93 @@
+name: Convert Flowseal .bat → .sh
+
+on:
+  schedule:
+    # Проверяем каждые 6 часов
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Ручной запуск из GitHub UI
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout our repo
+        uses: actions/checkout@v4
+
+      - name: Clone Flowseal/zapret-discord-youtube
+        run: |
+          git clone --depth=1 https://github.com/Flowseal/zapret-discord-youtube.git /tmp/flowseal
+
+      - name: Get upstream commit hash
+        id: upstream
+        run: |
+          HASH=$(git -C /tmp/flowseal rev-parse HEAD)
+          SHORT=$(git -C /tmp/flowseal rev-parse --short HEAD)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "short=$SHORT" >> $GITHUB_OUTPUT
+          echo "Upstream HEAD: $HASH"
+
+      - name: Check if already up to date
+        id: check
+        run: |
+          LAST_FILE="strategies/flowseal/.last_upstream_commit"
+          if [ -f "$LAST_FILE" ]; then
+            LAST=$(cat "$LAST_FILE")
+            if [ "$LAST" = "${{ steps.upstream.outputs.hash }}" ]; then
+              echo "No changes in upstream. Skipping."
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Convert .bat files to .sh
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          mkdir -p strategies/flowseal
+
+          # Копируем списки хостов (txt файлы)
+          if [ -d /tmp/flowseal/lists ]; then
+            mkdir -p strategies/flowseal/lists
+            cp -f /tmp/flowseal/lists/*.txt strategies/flowseal/lists/ 2>/dev/null || true
+          fi
+
+          # Копируем бинарные файлы для DPI (.bin)
+          if [ -d /tmp/flowseal/bin ]; then
+            mkdir -p strategies/flowseal/bin
+            cp -f /tmp/flowseal/bin/*.bin strategies/flowseal/bin/ 2>/dev/null || true
+          fi
+
+          # Конвертируем .bat → .sh
+          python3 .github/scripts/bat2sh.py /tmp/flowseal strategies/flowseal
+
+          # Сохраняем хэш апстрима
+          echo "${{ steps.upstream.outputs.hash }}" > strategies/flowseal/.last_upstream_commit
+          echo "Converted $(ls strategies/flowseal/*.sh 2>/dev/null | wc -l) strategy files"
+
+      - name: Show diff
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          git diff --stat strategies/flowseal/ || true
+
+      - name: Commit and push
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add strategies/flowseal/
+
+          # Проверяем есть ли реальные изменения
+          if git diff --staged --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore: sync flowseal strategies (${{ steps.upstream.outputs.short }})"
+            git push
+            echo "Pushed changes."
+          fi
