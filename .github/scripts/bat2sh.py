@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
 Конвертер .bat (Flowseal/zapret-discord-youtube / winws.exe) -> .sh (tpws Linux)
+
+Что делает:
+- Убирает Windows-специфичные флаги: --wf-tcp, --wf-udp (WinDivert)
+- Заменяет %LISTS% -> /data/lists/  и  %BIN% -> /data/bin/
+- Убирает блоки --new в которых есть %GameFilter*% (игровые фильтры зависят от env Windows)
+- Убирает пустые --filter-tcp= и --filter-udp= после подстановки переменных
+- Корректно обрабатывает: IF EXIST ..., start "title" /min, call ...
 """
 
 import re
@@ -8,11 +15,12 @@ import sys
 import os
 from pathlib import Path
 
-# Флаги только для WinDivert (не существуют в tpws)
-WINDOWS_ONLY = {'--wf-tcp', '--wf-udp'}
+# Флаги только для WinDivert, в tpws не существуют
+WINDOWS_ONLY_FLAGS = {'--wf-tcp', '--wf-udp'}
 
-# Переменные-фильтры из bat которые мы удаляем
-BAT_VARS = re.compile(r',?%GameFilter(?:TCP|UDP)?%|%GameFilter(?:TCP|UDP)?%,?')
+# Регулярки для bat-переменных
+RE_GAME_FILTER   = re.compile(r'%GameFilter(?:TCP|UDP)?%')
+RE_BAT_VAR_ANY   = re.compile(r'%[A-Za-z_][A-Za-z0-9_]*%')  # любая %VAR%
 
 
 def replace_paths(s: str) -> str:
@@ -22,16 +30,15 @@ def replace_paths(s: str) -> str:
 
 
 def join_continuation_lines(text: str) -> list[str]:
-    """Склеиваем строки, заканчивающиеся на ^ (bat продолжение)."""
+    """Склеиваем строки с ^ (bat-продолжение)."""
     lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
-    result = []
-    buf = ''
+    result, buf = [], ''
     for line in lines:
-        stripped = line.rstrip()
-        if stripped.endswith('^'):
-            buf += stripped[:-1] + ' '
+        s = line.rstrip()
+        if s.endswith('^'):
+            buf += s[:-1] + ' '
         else:
-            buf += stripped
+            buf += s
             result.append(buf)
             buf = ''
     if buf:
@@ -40,10 +47,8 @@ def join_continuation_lines(text: str) -> list[str]:
 
 
 def smart_split(s: str) -> list[str]:
-    """Разбивает строку на токены с учётом кавычек."""
-    tokens = []
-    cur = []
-    in_q = None
+    """Токенизация с учётом кавычек."""
+    tokens, cur, in_q = [], [], None
     for ch in s:
         if ch in ('"', "'") and in_q is None:
             in_q = ch
@@ -66,7 +71,7 @@ def extract_tpws_args(bat_content: str) -> list[str] | None:
     lines = join_continuation_lines(bat_content)
 
     # Ищем строку где winws.exe вызывается с аргументами
-    # (не строку IF EXIST "%BIN%winws.exe" — там после exe идёт только скобка)
+    # (не строку IF EXIST "%BIN%winws.exe" — там нет --)
     winws_line = None
     for line in lines:
         low = line.lower()
@@ -74,7 +79,6 @@ def extract_tpws_args(bat_content: str) -> list[str] | None:
             continue
         idx = low.find('winws.exe')
         after = line[idx + len('winws.exe'):].lstrip('"\'').strip()
-        # Вызов с аргументами содержит '--'
         if '--' in after:
             winws_line = line
             break
@@ -82,45 +86,89 @@ def extract_tpws_args(bat_content: str) -> list[str] | None:
     if winws_line is None:
         return None
 
-    # Берём всё после 'winws.exe'
+    # Берём всё после winws.exe
     idx = winws_line.lower().find('winws.exe')
     after = winws_line[idx + len('winws.exe'):]
-
-    # Убираем закрывающую кавычку сразу после exe
     after = after.lstrip('"\'')
 
     # Подставляем пути
     after = replace_paths(after)
 
-    # Удаляем bat-переменные GameFilter
-    after = BAT_VARS.sub('', after)
-
     tokens = smart_split(after)
 
-    # Фильтруем
-    result = []
+    # ── Первый проход: базовая очистка токенов ────────────────
+    clean = []
     skip_next = False
     for i, tok in enumerate(tokens):
         if skip_next:
             skip_next = False
             continue
-        # Пропускаем WinDivert флаги (--wf-tcp=X или --wf-tcp X)
+        # Windows-only флаги
         flag = tok.split('=')[0]
-        if flag in WINDOWS_ONLY:
-            # Если флаг без '=' — следующий токен может быть значением
+        if flag in WINDOWS_ONLY_FLAGS:
             if '=' not in tok and i + 1 < len(tokens) and not tokens[i+1].startswith('--'):
                 skip_next = True
             continue
-        # Пропускаем пустые скобки от IF блоков
+        # Мусор от IF блоков и bat команд
         if tok in ('(', ')', '""', "''", ''):
             continue
-        result.append(tok)
+        clean.append(tok)
 
-    return result if result else None
+    # ── Второй проход: разбиваем на блоки по --new ───────────
+    blocks: list[list[str]] = []
+    cur: list[str] = []
+    for tok in clean:
+        if tok == '--new':
+            blocks.append(cur)
+            cur = []
+        else:
+            cur.append(tok)
+    if cur:
+        blocks.append(cur)
+
+    # ── Третий проход: фильтруем блоки ───────────────────────
+    good_blocks: list[list[str]] = []
+    for block in blocks:
+        # Пропускаем блоки где остались непреобразованные %VAR%
+        block_str = ' '.join(block)
+        if RE_BAT_VAR_ANY.search(block_str):
+            continue
+
+        # Убираем токены с пустым значением флага (--filter-tcp= после удаления %GameFilter%)
+        filtered = []
+        for tok in block:
+            # --flag= (пустое значение) — пропускаем
+            if re.match(r'^--[a-z].*=$', tok):
+                continue
+            filtered.append(tok)
+
+        if not filtered:
+            continue
+
+        # Пропускаем блоки у которых после фильтрации нет реального содержимого
+        # (только --filter-* без других аргументов — бессмысленный блок)
+        non_filter = [t for t in filtered if not t.startswith('--filter-')]
+        has_filter = any(t.startswith('--filter-') for t in filtered)
+        if has_filter and not non_filter:
+            continue
+
+        good_blocks.append(filtered)
+
+    if not good_blocks:
+        return None
+
+    # Собираем финальный список токенов с --new между блоками
+    result: list[str] = []
+    for i, block in enumerate(good_blocks):
+        result.extend(block)
+        if i < len(good_blocks) - 1:
+            result.append('--new')
+
+    return result
 
 
 def tokens_to_sh(name: str, tokens: list[str]) -> str:
-    # Разбиваем на блоки по --new
+    # Разбиваем на блоки по --new для красивого форматирования
     blocks: list[list[str]] = []
     cur: list[str] = []
     for t in tokens:
@@ -136,23 +184,20 @@ def tokens_to_sh(name: str, tokens: list[str]) -> str:
     if not blocks:
         return ''
 
-    # Форматируем аргументы: каждый --flag на новой строке с отступом
-    arg_lines = []
+    # Каждый аргумент на своей строке с отступом
+    lines = []
     for b_idx, block in enumerate(blocks):
         is_last_block = (b_idx == len(blocks) - 1)
-        block_parts = []
         for t_idx, tok in enumerate(block):
             is_last_tok = (t_idx == len(block) - 1)
-            if is_last_tok:
-                if is_last_block:
-                    block_parts.append(f'    {tok}')
-                else:
-                    block_parts.append(f'    {tok} --new \\')
+            if is_last_tok and not is_last_block:
+                lines.append(f'    {tok} --new \\')
+            elif is_last_tok and is_last_block:
+                lines.append(f'    {tok}')
             else:
-                block_parts.append(f'    {tok} \\')
-        arg_lines.extend(block_parts)
+                lines.append(f'    {tok} \\')
 
-    args_str = '\n'.join(arg_lines)
+    args_str = '\n'.join(lines)
 
     return (
         '#!/bin/sh\n'
@@ -175,7 +220,6 @@ def convert_directory(src_dir: str, dst_dir: str) -> int:
     dst.mkdir(parents=True, exist_ok=True)
 
     converted = skipped = 0
-
     for bat_file in sorted(src.glob('*.bat')):
         name = bat_file.stem
         out_file = dst / f'{name}.sh'
