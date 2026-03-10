@@ -22,6 +22,8 @@ zapret-docker/
         ├── apply.sh    # POST → применить стратегию (перезапуск tpws)
         └── domains.sh  # GET/POST → управление hostlist
 ```
+docker exec zapret_docker reset-creds
+docker logs zapret_docker 2>&1 | tail -15
 
 ## Быстрый старт
 
