@@ -2,7 +2,7 @@
 
 Минималистичный Docker-контейнер с DPI-bypass (zapret/tpws) + SOCKS5 прокси + Web UI.
 <p align="center">
- <img width="600px" src="screenshot/zapret_docker.png" alt="qr"/>
+ <img width="900px" src="screenshot/zapret_docker.png" alt="qr"/>
 </p>
 ##LOG_LEVEL=none|error|warn|info|debug
 
