@@ -4,7 +4,11 @@
 <p align="center">
  <img width="900px" src="screenshot/zapret_docker.png" alt="qr"/>
 </p>
-##LOG_LEVEL=none|error|warn|info|debug
+
+LOG_LEVEL=none|error|warn|info|debug
+docker exec zapret_docker cat /app/data/credentials.json
+docker exec zapret_docker reset-creds
+docker logs zapret_docker 2>&1 | tail -15
 
 ## Структура
 
