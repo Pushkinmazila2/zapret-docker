@@ -1,7 +1,9 @@
 # zapret-docker
 
 Минималистичный Docker-контейнер с DPI-bypass (zapret/tpws) + SOCKS5 прокси + Web UI.
-
+<p align="center">
+ <img width="200px" src="screenshot/zapret_docker.png" alt="qr"/>
+</p>
 ##LOG_LEVEL=none|error|warn|info|debug
 
 ## Структура
